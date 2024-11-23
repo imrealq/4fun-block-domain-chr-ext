@@ -6,8 +6,12 @@ chrome.declarativeNetRequest.getDynamicRules().then((rules) => {
   const ruleIds = rules.map((rule) => rule.id)
   const maxId = Math.max(ruleIds, 0)
 
-  // TODO: Validate number of rules against MAX_NUMBER_OF_STATIC_RULESETS
   // Docs: https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#limits
+  const numOfRules = 50
+  if (rules.length >= numOfRules) {
+    console.error('Reached max dynamic rules limit')
+    return
+  }
 
   chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: ruleIds,
