@@ -4,7 +4,6 @@ console.log('background is running')
 
 chrome.declarativeNetRequest.getDynamicRules().then((rules) => {
   const ruleIds = rules.map((rule) => rule.id)
-  const maxId = Math.max(ruleIds, 0)
 
   // Docs: https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#limits
   const numOfRules = 50
@@ -16,7 +15,7 @@ chrome.declarativeNetRequest.getDynamicRules().then((rules) => {
   chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: ruleIds,
     addRules: [{
-      "id": maxId + 1,
+      "id": 1,
       "priority": 1,
       "action": {
         "type": "block"
