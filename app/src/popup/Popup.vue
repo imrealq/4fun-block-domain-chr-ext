@@ -1,6 +1,6 @@
 <script setup lang="js">
 import { ref, onMounted } from 'vue'
-import { getDomain, isValidDomain, isDomainExisted } from '@/ultis/domain'
+import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
 
 const newUrl = ref('')
 const domains = ref([])

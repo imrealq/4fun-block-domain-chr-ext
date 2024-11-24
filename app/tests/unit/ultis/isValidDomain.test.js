@@ -1,4 +1,4 @@
-import { isValidDomain } from '@/ultis/domain'
+import { isValidDomain } from '@/utils/domain'
 
 describe('isValidDomain', () => {
   it('returns true for valid domains', () => {
