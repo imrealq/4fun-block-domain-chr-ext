@@ -1,27 +1,9 @@
 <script setup lang="js">
 import { ref, onMounted } from 'vue'
+import { getDomain, isValidDomain, isDomainExisted } from '@/ultis/domain'
 
 const newUrl = ref('')
 const domains = ref([])
-
-const getDomain = (url) => {
- try {
-   const domain = new URL(url).hostname
-   return domain
- } catch {
-   return url.trim()
- }
-}
-
-const isValidDomain = (url) => {
- const pattern = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6}$/
- const domain = getDomain(url)
- return pattern.test(domain)
-}
-
-const isDomainExisted = (domain) => {
-  return domains.value.some(item => item.url === domain)
-}
 
 const addDomain = () => {
   if (!newUrl.value) {
@@ -35,14 +17,14 @@ const addDomain = () => {
     newUrl.value = ''
     return
   }
-
-  if (isDomainExisted(domain)) {
+  
+  const newDomains = Array.isArray(domains.value) ? [...domains.value] : []
+  if (isDomainExisted(newDomains, domain)) {
     // TODO: display message to user
     newUrl.value = ''
     return
   }
 
-  const newDomains = Array.isArray(domains.value) ? [...domains.value] : []
   newDomains.push({
     domain: domain,
     timestamp: Date.now(),
@@ -50,14 +32,14 @@ const addDomain = () => {
   domains.value = newDomains
   const blockedDomains = {
     domains: domains,
-    lastUpdated: Date.now()
+    lastUpdated: Date.now(),
   }
-  chrome.storage.local.set({blockedDomains})
+  chrome.storage.local.set({ blockedDomains })
   newUrl.value = ''
 }
 
 onMounted(() => {
-  chrome.storage.local.get(["blockedDomains"], (result) => {
+  chrome.storage.local.get(['blockedDomains'], (result) => {
     domains.value = result.blockedDomains?.domains || []
   })
 })

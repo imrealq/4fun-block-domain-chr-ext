@@ -21,7 +21,8 @@
     "build:watch": "vite build --watch",
     "preview": "vite preview",
     "fmt": "prettier --write '**/*.{vue,js,json,css,scss,md}'",
-    "zip": "npm run build && node src/zip.js"
+    "zip": "npm run build && node src/zip.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "vue": "^3.2.37"
@@ -29,9 +30,12 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.19",
     "@vitejs/plugin-vue": "^4.4.0",
+    "@vue/test-utils": "^2.4.6",
     "gulp": "^5.0.0",
     "gulp-zip": "^6.0.0",
+    "jsdom": "^25.0.1",
     "prettier": "^3.0.3",
-    "vite": "^4.4.11"
+    "vite": "^4.4.11",
+    "vitest": "^2.1.5"
   }
 }

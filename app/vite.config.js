@@ -18,5 +18,14 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [crx({ manifest }), vue()],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+    },
+    resolve: {
+      alias: {
+        '@': '/src',
+      },
+    },
   }
 })
