@@ -18,20 +18,20 @@ const addDomain = () => {
     return
   }
   
-  const newDomains = Array.isArray(domains.value) ? [...domains.value] : []
+  const newDomains = Object.values(domains.value) || []
   if (isDomainExisted(newDomains, domain)) {
     // TODO: display message to user
     newUrl.value = ''
     return
   }
 
-  newDomains.push({
+  newDomains.unshift({
     domain: domain,
     timestamp: Date.now(),
   })
   domains.value = newDomains
   const blockedDomains = {
-    domains: domains,
+    domains: domains.value,
     lastUpdated: Date.now(),
   }
   chrome.storage.local.set({ blockedDomains })
