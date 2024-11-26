@@ -1,5 +1,5 @@
 <script setup lang="js">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
 
 const newUrl = ref('')
@@ -38,11 +38,15 @@ const addDomain = () => {
   newUrl.value = ''
 }
 
-onMounted(() => {
-  chrome.storage.local.get(['blockedDomains'], (result) => {
-    domains.value = result.blockedDomains?.domains || []
-  })
+onMounted(async () => {
+  const result = await chrome.storage.local.get(['blockedDomains'])
+  domains.value = result.blockedDomains?.domains || []
 })
+
+const computedValues = computed(() => ({
+  limit: (Object.values(domains.value) || []).slice(0,5),
+  count: domains.value?.length || 0
+}))
 </script>
 
 <template>
@@ -50,6 +54,9 @@ onMounted(() => {
     <h3>Blocked domains</h3>
     <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />
     <button @click="addDomain" :disable="!newUrl.value">+</button>
+    <ul>
+      <li v-for="item in computedValues.limit" :key="item.timestamp">{{ item.domain }}</li>
+    </ul>
   </main>
 </template>
 
@@ -91,6 +98,10 @@ main {
   text-align: center;
   padding: 1em;
   margin: 0 auto;
+}
+
+li {
+  color: #42b983;
 }
 
 h3 {
