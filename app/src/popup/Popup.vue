@@ -26,6 +26,7 @@ const addDomain = () => {
   }
 
   newDomains.unshift({
+    id: Date.now(),
     domain: domain,
     timestamp: Date.now(),
   })
@@ -36,6 +37,19 @@ const addDomain = () => {
   }
   chrome.storage.local.set({ blockedDomains })
   newUrl.value = ''
+}
+
+const deleteDomain = (id) => {
+  if (!Number.isInteger(id)) return;
+  
+  let storedDomains = Object.values(domains.value) || []
+  storedDomains = storedDomains.filter(d => d.id != id)
+  domains.value = storedDomains 
+  const blockedDomains = {
+    domains: storedDomains,
+    lastUpdated: Date.now(),
+  }
+  chrome.storage.local.set({blockedDomains})
 }
 
 onMounted(async () => {
@@ -54,9 +68,12 @@ const computedValues = computed(() => ({
     <h3>Blocked domains</h3>
     <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />
     <button @click="addDomain" :disable="!newUrl.value">+</button>
-    <ul>
-      <li v-for="item in computedValues.limit" :key="item.timestamp">{{ item.domain }}</li>
-    </ul>
+    <div>
+      <div v-for="item in computedValues.limit" :key="item.timestamp">
+        {{ item.domain }}
+        <button @click="deleteDomain(item.id)">-</button>
+      </div>
+    </div>
   </main>
 </template>
 
