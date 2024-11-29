@@ -1,6 +1,7 @@
 <script setup lang="js">
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
+import { updateBlockRules } from '@/background/index'
 
 const newUrl = ref('')
 const domains = ref([])
@@ -36,6 +37,7 @@ const addDomain = () => {
     lastUpdated: Date.now(),
   }
   chrome.storage.local.set({ blockedDomains })
+  updateBlockRules()
   newUrl.value = ''
 }
 
@@ -50,6 +52,7 @@ const deleteDomain = (id) => {
     lastUpdated: Date.now(),
   }
   chrome.storage.local.set({blockedDomains})
+  updateBlockRules()
 }
 
 onMounted(async () => {
