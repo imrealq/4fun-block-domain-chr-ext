@@ -1,11 +1,12 @@
 <script setup lang="js">
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
-import { updateBlockRules, startBlockTimer, getBlockedDomains } from '@/background/index'
+import { updateBlockRules, startBlockTimer, getBlockedDomains, stopBlockTimer, deleteRules, getAllRuleIds } from '@/background/index'
 
 const newUrl = ref('')
 const domains = ref([])
 const timeInMinutes = ref(5)
+const isBlocking = ref(false)
 
 const addDomain = () => {
   if (!newUrl.value) {
@@ -59,8 +60,22 @@ const startTimer = () => {
   startBlockTimer(Number(timeInMinutes.value))
 }
 
+const stopTimer = async() => {
+  await deleteRules(await getAllRuleIds())
+  stopBlockTimer()
+}
+
 onMounted(async () => {
   domains.value = await getBlockedDomains()
+  chrome.storage.local.get(['isBlocking'], (result) => {
+    isBlocking.value = result.isBlocking || false
+  })
+
+  chrome.storage.onChanged.addListener((changes) => {
+    if(changes.isBlocking) {
+      isBlocking.value = changes.isBlocking.newValue
+    }
+  })
 })
 
 const computedValues = computed(() => ({
@@ -75,7 +90,8 @@ const computedValues = computed(() => ({
     <span>{{ timeInMinutes }} {{ timeInMinutes === '1' ? 'min' : 'mins' }}</span>
     <br>
     <input type="range" min="1" max="60" :value="timeInMinutes" step="1" v-model="timeInMinutes">
-    <button @click="startTimer()">Start</button>
+    <button v-if="!isBlocking" @click="startTimer">Start</button>
+    <button v-else @click="stopTimer">Stop</button>
     <br>
     <h3>Blocked domains</h3>
     <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />

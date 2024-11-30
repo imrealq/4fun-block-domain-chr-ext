@@ -49,16 +49,22 @@ export const clearBlockRules = async () => {
 }
 
 export const startBlockTimer = (minutes) => {
-  chrome.alarms.clear('blockRulesTimer').then(() => {
-    chrome.alarms.create('blockRulesTimer', {
-      delayInMinutes: minutes
-    })
+  chrome.alarms.clear('blockRulesTimer')
+  chrome.alarms.create('blockRulesTimer', {
+    delayInMinutes: minutes
   })
+  chrome.storage.local.set({ isBlocking: true })
+}
+
+export const stopBlockTimer = () => {
+  chrome.alarms.clear('blockRulesTimer')
+  chrome.storage.local.set({ isBlocking: false })
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'blockRulesTimer') {
     await clearBlockRules() 
+    chrome.storage.local.set({ isBlocking: false })
     console.log('blocked time expired')
   }
 })
