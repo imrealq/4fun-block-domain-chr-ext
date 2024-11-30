@@ -1,7 +1,7 @@
 <script setup lang="js">
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
-import { updateBlockRules } from '@/background/index'
+import { updateBlockRules, startBlockTimer, getBlockedDomains } from '@/background/index'
 
 const newUrl = ref('')
 const domains = ref([])
@@ -60,8 +60,7 @@ const startTimer = () => {
 }
 
 onMounted(async () => {
-  const result = await chrome.storage.local.get(['blockedDomains'])
-  domains.value = result.blockedDomains?.domains || []
+  domains.value = await getBlockedDomains()
 })
 
 const computedValues = computed(() => ({

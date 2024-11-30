@@ -1,44 +1,34 @@
 console.log('background is running')
 
-// TODO: get blocked urls
+export const getBlockedDomains = async () => {
+  const { blockedDomains } = await chrome.storage.local.get(['blockedDomains'])
+  return Object.values(blockedDomains?.domains || {})
+}
 
-export const updateBlockRules = () => {
-  // Get current rules
-  chrome.declarativeNetRequest.getDynamicRules().then((rules) => {
-    const maxRules = 50
-    if (rules.length >= maxRules) {
-      console.error('Reached max dynamic rules limit')
-      return
+export const updateBlockRules = async () => {
+  const rules = await chrome.declarativeNetRequest.getDynamicRules() 
+  if (rules.length >= 50) {
+    console.error('Reached max dynamic rules limit')
+    return
+  }
+  
+  await deleteRules(await getAllRuleIds())
+
+  const domains = await getBlockedDomains()    
+  const blockRules = domains.map((d, id) => ({
+    id: id + 1,
+    priority: 1,
+    action: { type: 'block' },
+    condition: {
+      urlFilter: `||${d.domain}`,
+      resourceTypes: ['main_frame']
     }
-    
-    // Get current rule IDs to remove
-    const ruleIds = rules.map(rule => rule.id)
- 
-    // Get blocked domains from storage
-    chrome.storage.local.get(["blockedDomains"]).then(result => {
-      const domains = result.blockedDomains?.domains || []
- 
-      // Create block rules for each domain
-      const blockRules = Object.values(domains).map((d, id) => ({
-        id: id + 1,
-        priority: 1,
-        action: {
-          type: 'block',
-        },
-        condition: {
-          urlFilter: `||${d.domain}`,
-          resourceTypes: ['main_frame'],
-        }
-      }))
- 
-      // Update rules by removing old and adding new
-      chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: ruleIds,
-        addRules: blockRules,
-      })
-    })
+  }))
+
+  chrome.declarativeNetRequest.updateDynamicRules({
+    addRules: blockRules
   })
- }
+}
 
 // Get all rule IDs
 export const getAllRuleIds = async () => {
@@ -69,5 +59,6 @@ export const startBlockTimer = (minutes) => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'blockRulesTimer') {
     await clearBlockRules() 
+    console.log('blocked time expired')
   }
 })
