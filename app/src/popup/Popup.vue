@@ -5,6 +5,7 @@ import { updateBlockRules } from '@/background/index'
 
 const newUrl = ref('')
 const domains = ref([])
+const timeInMinutes = ref(5)
 
 const addDomain = () => {
   if (!newUrl.value) {
@@ -37,7 +38,6 @@ const addDomain = () => {
     lastUpdated: Date.now(),
   }
   chrome.storage.local.set({ blockedDomains })
-  updateBlockRules()
   newUrl.value = ''
 }
 
@@ -52,7 +52,11 @@ const deleteDomain = (id) => {
     lastUpdated: Date.now(),
   }
   chrome.storage.local.set({blockedDomains})
+}
+
+const startTimer = () => {
   updateBlockRules()
+  startBlockTimer(Number(timeInMinutes.value))
 }
 
 onMounted(async () => {
@@ -68,6 +72,12 @@ const computedValues = computed(() => ({
 
 <template>
   <main>
+    <h3>Blocked time</h3>
+    <span>{{ timeInMinutes }} {{ timeInMinutes === '1' ? 'min' : 'mins' }}</span>
+    <br>
+    <input type="range" min="1" max="60" :value="timeInMinutes" step="1" v-model="timeInMinutes">
+    <button @click="startTimer()">Start</button>
+    <br>
     <h3>Blocked domains</h3>
     <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />
     <button @click="addDomain" :disable="!newUrl.value">+</button>

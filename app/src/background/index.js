@@ -19,7 +19,7 @@ export const updateBlockRules = () => {
       const domains = result.blockedDomains?.domains || []
  
       // Create block rules for each domain
-      const blockRules = domains.map((d, id) => ({
+      const blockRules = Object.values(domains).map((d, id) => ({
         id: id + 1,
         priority: 1,
         action: {
@@ -39,3 +39,35 @@ export const updateBlockRules = () => {
     })
   })
  }
+
+// Get all rule IDs
+export const getAllRuleIds = async () => {
+  const rules = await chrome.declarativeNetRequest.getDynamicRules()
+  return rules.map(rule => rule.id)
+}
+
+// Delete rules
+export const deleteRules = async (ruleIds) => {
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: ruleIds 
+  })
+}
+
+export const clearBlockRules = async () => {
+  const ruleIds = await getAllRuleIds()
+  await deleteRules(ruleIds)
+}
+
+export const startBlockTimer = (minutes) => {
+  chrome.alarms.clear('blockRulesTimer').then(() => {
+    chrome.alarms.create('blockRulesTimer', {
+      delayInMinutes: minutes
+    })
+  })
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'blockRulesTimer') {
+    await clearBlockRules() 
+  }
+})
