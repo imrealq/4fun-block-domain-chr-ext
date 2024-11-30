@@ -1,7 +1,14 @@
 <script setup lang="js">
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
-import { updateBlockRules, startBlockTimer, getBlockedDomains, stopBlockTimer, deleteRules, getAllRuleIds } from '@/background/index'
+import {
+  updateBlockRules,
+  startBlockTimer,
+  getBlockedDomains,
+  stopBlockTimer,
+  deleteRules,
+  getAllRuleIds,
+} from '@/background/index'
 
 const newUrl = ref('')
 const domains = ref([])
@@ -20,7 +27,7 @@ const addDomain = () => {
     newUrl.value = ''
     return
   }
-  
+
   const newDomains = Object.values(domains.value) || []
   if (isDomainExisted(newDomains, domain)) {
     // TODO: display message to user
@@ -43,16 +50,16 @@ const addDomain = () => {
 }
 
 const deleteDomain = (id) => {
-  if (!Number.isInteger(id)) return;
-  
+  if (!Number.isInteger(id)) return
+
   let storedDomains = Object.values(domains.value) || []
-  storedDomains = storedDomains.filter(d => d.id != id)
-  domains.value = storedDomains 
+  storedDomains = storedDomains.filter((d) => d.id != id)
+  domains.value = storedDomains
   const blockedDomains = {
     domains: storedDomains,
     lastUpdated: Date.now(),
   }
-  chrome.storage.local.set({blockedDomains})
+  chrome.storage.local.set({ blockedDomains })
 }
 
 const startTimer = () => {
@@ -60,7 +67,7 @@ const startTimer = () => {
   startBlockTimer(Number(timeInMinutes.value))
 }
 
-const stopTimer = async() => {
+const stopTimer = async () => {
   await deleteRules(await getAllRuleIds())
   stopBlockTimer()
 }
@@ -72,15 +79,15 @@ onMounted(async () => {
   })
 
   chrome.storage.onChanged.addListener((changes) => {
-    if(changes.isBlocking) {
+    if (changes.isBlocking) {
       isBlocking.value = changes.isBlocking.newValue
     }
   })
 })
 
 const computedValues = computed(() => ({
-  limit: (Object.values(domains.value) || []).slice(0,5),
-  count: domains.value?.length || 0
+  limit: (Object.values(domains.value) || []).slice(0, 5),
+  count: domains.value?.length || 0,
 }))
 </script>
 
@@ -88,11 +95,11 @@ const computedValues = computed(() => ({
   <main>
     <h3>Blocked time</h3>
     <span>{{ timeInMinutes }} {{ timeInMinutes === '1' ? 'min' : 'mins' }}</span>
-    <br>
-    <input type="range" min="1" max="60" :value="timeInMinutes" step="1" v-model="timeInMinutes">
+    <br />
+    <input type="range" min="1" max="60" :value="timeInMinutes" step="1" v-model="timeInMinutes" />
     <button v-if="!isBlocking" @click="startTimer">Start</button>
     <button v-else @click="stopTimer">Stop</button>
-    <br>
+    <br />
     <h3>Blocked domains</h3>
     <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />
     <button @click="addDomain" :disable="!newUrl.value">+</button>
