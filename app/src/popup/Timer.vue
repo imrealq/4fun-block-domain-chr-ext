@@ -22,6 +22,12 @@ const updateTimer = async () => {
 }
 
 onMounted(async () => {
+  const { isBlocking } = await chrome.storage.local.get(['isBlocking'])
+  if (isBlocking) {
+    updateTimer()
+    intervalId = setInterval(updateTimer, 1000)
+  }
+
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.isBlocking) {
       if (changes.isBlocking.newValue) {
