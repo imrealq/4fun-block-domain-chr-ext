@@ -1,4 +1,5 @@
 <script setup lang="js">
+import Timer from './Timer.vue'
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
 import {
@@ -74,9 +75,11 @@ const stopTimer = async () => {
 
 onMounted(async () => {
   domains.value = await getBlockedDomains()
-  chrome.storage.local.get(['isBlocking'], (result) => {
-    isBlocking.value = result.isBlocking || false
-  })
+
+  const storage = await chrome.storage.local.get(['isBlocking'])
+  if (storage.isBlocking) {
+    isBlocking.value = storage.isBlocking || false
+  }
 
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.isBlocking) {
@@ -98,7 +101,8 @@ const computedValues = computed(() => ({
     <br />
     <input type="range" min="1" max="60" :value="timeInMinutes" step="1" v-model="timeInMinutes" />
     <button v-if="!isBlocking" @click="startTimer">Start</button>
-    <button v-else @click="stopTimer">Stop</button>
+    <button v-else @click="stopTimer" class="stop-btn">Stop</button>
+    <Timer />
     <br />
     <h3>Blocked domains</h3>
     <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />
@@ -196,5 +200,9 @@ a {
   margin: 0.5rem;
   color: #cccccc;
   text-decoration: none;
+}
+
+.stop-btn {
+  color: red;
 }
 </style>
