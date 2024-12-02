@@ -8,7 +8,7 @@ import { startBlockTimer, stopBlockTimer } from '@/background/timer.js'
 
 const domain = ref('')
 const domains = ref([])
-const minutes = ref(5) 
+const minutes = ref(5)
 const isBlocking = ref(false)
 
 const addDomain = () => {
@@ -31,15 +31,15 @@ const addDomain = () => {
   const newDomain = {
     id: Date.now(),
     domain: cleanedDomain,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   }
 
   domains.value = [newDomain, ...(Object.values(domains.value) || [])]
-  updateStorage({ 
+  updateStorage({
     blockedDomains: {
       domains: domains.value,
-      lastUpdated: Date.now()
-    }
+      lastUpdated: Date.now(),
+    },
   })
   domain.value = ''
 }
@@ -47,38 +47,38 @@ const addDomain = () => {
 const deleteDomain = (id) => {
   if (!Number.isInteger(id)) return
 
-  domains.value = (Object.values(domains.value) || []).filter(d => d.id !== id)
+  domains.value = (Object.values(domains.value) || []).filter((d) => d.id !== id)
   updateStorage({
     blockedDomains: {
       domains: domains.value,
-      lastUpdated: Date.now() 
-    }
+      lastUpdated: Date.now(),
+    },
   })
 }
 
 const startTimer = () => {
- updateBlockRules()
- startBlockTimer(minutes.value)
+  updateBlockRules()
+  startBlockTimer(minutes.value)
 }
 
 const stopTimer = () => {
- stopBlockTimer()
-} 
+  stopBlockTimer()
+}
 
 onMounted(async () => {
   domains.value = await getBlockedDomains()
   isBlocking.value = await getIsBlocking()
 
-  chrome.storage.onChanged.addListener(changes => {
+  chrome.storage.onChanged.addListener((changes) => {
     if (changes.isBlocking) {
-      isBlocking.value = changes.isBlocking.newValue  
+      isBlocking.value = changes.isBlocking.newValue
     }
   })
 })
 
 const computedValues = computed(() => ({
- limit: (Object.values(domains.value) || []).slice(0, 5),
- count: domains.value?.length || 0,
+  limit: (Object.values(domains.value) || []).slice(0, 5),
+  count: domains.value?.length || 0,
 }))
 </script>
 
@@ -87,22 +87,22 @@ const computedValues = computed(() => ({
     <h3>Block Timer</h3>
     <span>{{ minutes }} minutes</span>
     <input type="range" v-model="minutes" min="1" max="60" step="1" />
-    
+
     <button v-if="!isBlocking" @click="startTimer">Start</button>
     <button v-else @click="stopTimer" class="stop-btn">Stop</button>
-    
+
     <Timer />
- 
+
     <h3>Blocked Domains</h3>
     <input v-model="domain" @keyup.enter="addDomain" placeholder="Enter domain" />
     <button @click="addDomain">+</button>
- 
+
     <div v-for="item in computedValues.limit" :key="item.timestamp">
       {{ item.domain }}
       <button @click="deleteDomain(item.id)">-</button>
     </div>
   </main>
- </template>
+</template>
 
 <style>
 :root {
