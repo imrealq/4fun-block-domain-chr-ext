@@ -2,119 +2,107 @@
 import Timer from './Timer.vue'
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
-import {
-  updateBlockRules,
-  startBlockTimer,
-  getBlockedDomains,
-  stopBlockTimer,
-  deleteRules,
-  getAllRuleIds,
-} from '@/background/index'
+import { updateBlockRules } from '@/background/blockDomain.js'
+import { updateStorage, getBlockedDomains, getIsBlocking } from '@/background/storage.js'
+import { startBlockTimer, stopBlockTimer } from '@/background/timer.js'
 
-const newUrl = ref('')
+const domain = ref('')
 const domains = ref([])
-const timeInMinutes = ref(5)
+const minutes = ref(5) 
 const isBlocking = ref(false)
 
 const addDomain = () => {
-  if (!newUrl.value) {
-    // TODO: display message to user
-    return
-  }
+  if (!domain.value) return
 
-  const domain = getDomain(newUrl.value)
-  if (!isValidDomain(domain)) {
+  const cleanedDomain = getDomain(domain.value)
+  if (!isValidDomain(cleanedDomain)) {
     // TODO: display message to user
-    newUrl.value = ''
+    domain.value = ''
     return
   }
 
   const newDomains = Object.values(domains.value) || []
-  if (isDomainExisted(newDomains, domain)) {
+  if (isDomainExisted(newDomains, cleanedDomain)) {
     // TODO: display message to user
-    newUrl.value = ''
+    domain.value = ''
     return
   }
 
-  newDomains.unshift({
+  const newDomain = {
     id: Date.now(),
-    domain: domain,
-    timestamp: Date.now(),
-  })
-  domains.value = newDomains
-  const blockedDomains = {
-    domains: domains.value,
-    lastUpdated: Date.now(),
+    domain: cleanedDomain,
+    timestamp: Date.now()
   }
-  chrome.storage.local.set({ blockedDomains })
-  newUrl.value = ''
+
+  domains.value = [newDomain, ...(Object.values(domains.value) || [])]
+  updateStorage({ 
+    blockedDomains: {
+      domains: domains.value,
+      lastUpdated: Date.now()
+    }
+  })
+  domain.value = ''
 }
 
 const deleteDomain = (id) => {
   if (!Number.isInteger(id)) return
 
-  let storedDomains = Object.values(domains.value) || []
-  storedDomains = storedDomains.filter((d) => d.id != id)
-  domains.value = storedDomains
-  const blockedDomains = {
-    domains: storedDomains,
-    lastUpdated: Date.now(),
-  }
-  chrome.storage.local.set({ blockedDomains })
+  domains.value = (Object.values(domains.value) || []).filter(d => d.id !== id)
+  updateStorage({
+    blockedDomains: {
+      domains: domains.value,
+      lastUpdated: Date.now() 
+    }
+  })
 }
 
 const startTimer = () => {
-  updateBlockRules()
-  startBlockTimer(Number(timeInMinutes.value))
+ updateBlockRules()
+ startBlockTimer(minutes.value)
 }
 
-const stopTimer = async () => {
-  await deleteRules(await getAllRuleIds())
-  stopBlockTimer()
-}
+const stopTimer = () => {
+ stopBlockTimer()
+} 
 
 onMounted(async () => {
   domains.value = await getBlockedDomains()
+  isBlocking.value = await getIsBlocking()
 
-  const storage = await chrome.storage.local.get(['isBlocking'])
-  if (storage.isBlocking) {
-    isBlocking.value = storage.isBlocking || false
-  }
-
-  chrome.storage.onChanged.addListener((changes) => {
+  chrome.storage.onChanged.addListener(changes => {
     if (changes.isBlocking) {
-      isBlocking.value = changes.isBlocking.newValue
+      isBlocking.value = changes.isBlocking.newValue  
     }
   })
 })
 
 const computedValues = computed(() => ({
-  limit: (Object.values(domains.value) || []).slice(0, 5),
-  count: domains.value?.length || 0,
+ limit: (Object.values(domains.value) || []).slice(0, 5),
+ count: domains.value?.length || 0,
 }))
 </script>
 
 <template>
   <main>
-    <h3>Blocked time</h3>
-    <span>{{ timeInMinutes }} {{ timeInMinutes === '1' ? 'min' : 'mins' }}</span>
-    <br />
-    <input type="range" min="1" max="60" :value="timeInMinutes" step="1" v-model="timeInMinutes" />
+    <h3>Block Timer</h3>
+    <span>{{ minutes }} minutes</span>
+    <input type="range" v-model="minutes" min="1" max="60" step="1" />
+    
     <button v-if="!isBlocking" @click="startTimer">Start</button>
     <button v-else @click="stopTimer" class="stop-btn">Stop</button>
+    
     <Timer />
-    <br />
-    <h3>Blocked domains</h3>
-    <input v-model="newUrl" @keyup.enter="addDomain" placeholder="Enter domain to block" />
-    <button @click="addDomain" :disable="!newUrl.value">+</button>
-    <div>
-      <div v-for="item in computedValues.limit" :key="item.timestamp">
-        {{ item.domain }}
-        <button @click="deleteDomain(item.id)">-</button>
-      </div>
+ 
+    <h3>Blocked Domains</h3>
+    <input v-model="domain" @keyup.enter="addDomain" placeholder="Enter domain" />
+    <button @click="addDomain">+</button>
+ 
+    <div v-for="item in computedValues.limit" :key="item.timestamp">
+      {{ item.domain }}
+      <button @click="deleteDomain(item.id)">-</button>
     </div>
   </main>
-</template>
+ </template>
 
 <style>
 :root {

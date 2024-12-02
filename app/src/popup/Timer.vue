@@ -1,55 +1,46 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { getTimeLeft, getIsBlocking } from '@/background/storage.js'
 
-const timeLeftInSeconds = ref(0)
-let intervalId
-
-const getTimeLeftInSeconds = async () => {
-  const alarm = await chrome.alarms.get('blockRulesTimer')
-  if (!alarm) return 0
-  return Math.max(0, alarm.scheduledTime - Date.now())
-}
+const timeLeft = ref(0)
+let timer
 
 const formatTime = (ms) => {
-  const minutes = Math.floor(ms / 60000)
-  const seconds = Math.floor((ms % 60000) / 1000)
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+ const minutes = Math.floor(ms / 60000)
+ const seconds = Math.floor((ms % 60000) / 1000)
+ return `${minutes}:${seconds.toString().padStart(2, '0')}` 
+}
+
+const startTimer = async () => {
+ updateTimer()
+ timer = setInterval(updateTimer, 1000)
+}
+
+const stopTimer = () => {
+ clearInterval(timer)
+ timeLeft.value = 0
 }
 
 const updateTimer = async () => {
-  timeLeftInSeconds.value = await getTimeLeftInSeconds()
-  chrome.storage.local.set({ timeLeftInSeconds: timeLeftInSeconds.value })
+ timeLeft.value = await getTimeLeft()
 }
 
 onMounted(async () => {
-  const { isBlocking } = await chrome.storage.local.get(['isBlocking'])
-  if (isBlocking) {
-    updateTimer()
-    intervalId = setInterval(updateTimer, 1000)
-  }
+ const isBlocking = await getIsBlocking()
+ if (isBlocking) startTimer()
 
-  chrome.storage.onChanged.addListener((changes) => {
-    if (changes.isBlocking) {
-      if (changes.isBlocking.newValue) {
-        // Start timer khi isBlocking = true
-        updateTimer()
-        intervalId = setInterval(updateTimer, 1000)
-      } else {
-        // Stop timer khi isBlocking = false
-        clearInterval(intervalId)
-        timeLeftInSeconds.value = 0
-      }
-    }
-  })
+ chrome.storage.onChanged.addListener((changes) => {
+   if (changes.isBlocking?.newValue) {
+     startTimer()
+   } else {
+     stopTimer()
+   }
+ })
 })
 
-onUnmounted(() => {
-  clearInterval(intervalId)
-})
+onUnmounted(() => stopTimer())
 </script>
 
 <template>
-  <div v-if="timeLeftInSeconds">
-    {{ formatTime(timeLeftInSeconds) }}
-  </div>
+ <div v-if="timeLeft">{{ formatTime(timeLeft) }}</div>
 </template>
