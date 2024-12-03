@@ -2,6 +2,7 @@ import { updateStorage } from './storage.js'
 import { updateBlockRules, clearBlockRules } from './blockDomain.js'
 
 export const startBlockTimer = (minutes) => {
+  minutes = parseInt(minutes)
   chrome.alarms.clear('blockTimer')
   chrome.alarms.create('blockTimer', {
     delayInMinutes: minutes,
