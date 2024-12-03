@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getTimeLeft } from '@/background/timer.js'
-import { getIsBlocking } from '@/background/storage.js'
+import { getStorage } from '@/background/storage.js'
 
 const timeLeft = ref(0)
 let timer
@@ -18,13 +18,17 @@ const updateTimer = async () => {
 }
 
 onMounted(async () => {
-  const { isBlocking } = await getIsBlocking()
+  const { isBlocking, timeLeft: storedTime } = await getStorage()
   if (isBlocking) {
+    timeLeft.value = storedTime
     updateTimer()
     timer = setInterval(updateTimer, 1000)
   }
 
   chrome.storage.onChanged.addListener((changes) => {
+    if (changes.timeLeft) {
+      timeLeft.value = changes.timeLeft.newValue
+    }
     if (changes.isBlocking) {
       if (changes.isBlocking.newValue) {
         updateTimer()
