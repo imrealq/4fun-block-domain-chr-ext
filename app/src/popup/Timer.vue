@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getTimeLeft } from '@/background/timer.js'
-import { getStorage } from '@/background/storage.js'
+import { getStorage, updateStorage } from '@/background/storage.js'
 
 const timeLeft = ref(0)
 let timer
@@ -12,9 +12,21 @@ const formatTime = (ms) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
+const stopBlocking = async () => {
+  clearInterval(timer)
+  await updateStorage({
+    isBlocking: false,
+    timeLeft: 0
+  })
+}
+
 const updateTimer = async () => {
   timeLeft.value = await getTimeLeft()
-  chrome.storage.local.set({ timeLeft: timeLeft.value })
+  if (timeLeft.value <= 0) {
+    await stopBlocking()
+  } else {
+    await updateStorage({ timeLeft: timeLeft.value })
+  }
 }
 
 onMounted(async () => {
