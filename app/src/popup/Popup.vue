@@ -8,7 +8,6 @@ import {
   getBlockedDomains,
   getIsBlocking,
   getMinutes,
-  setMinutes,
 } from '@/background/storage.js'
 import { startBlockTimer, stopBlockTimer } from '@/background/timer.js'
 
@@ -64,7 +63,7 @@ const deleteDomain = (id) => {
 
 const startTimer = () => {
   updateBlockRules()
-  setMinutes(minutes.value)
+  updateStorage({minutes: minutes.value})
   startBlockTimer(minutes.value)
 }
 
@@ -73,7 +72,7 @@ const stopTimer = () => {
 }
 
 const saveMinutes = () => {
-  setMinutes(minutes.value)
+  updateStorage({minutes: minutes.value})
 }
 
 onMounted(async () => {

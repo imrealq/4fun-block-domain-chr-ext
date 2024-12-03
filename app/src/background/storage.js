@@ -24,10 +24,6 @@ export const getIsBlocking = async () => {
   return isBlocking || false
 }
 
-export const setMinutes = async (minutes) => {
-  await chrome.storage.local.set({ [STORAGE_KEYS.MINUTES]: minutes })
-}
-
 export const updateStorage = async (data) => {
   await chrome.storage.local.set(data)
 }
