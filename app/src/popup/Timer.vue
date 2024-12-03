@@ -16,7 +16,7 @@ const stopBlocking = async () => {
   clearInterval(timer)
   await updateStorage({
     isBlocking: false,
-    timeLeft: 0
+    timeLeft: 0,
   })
 }
 

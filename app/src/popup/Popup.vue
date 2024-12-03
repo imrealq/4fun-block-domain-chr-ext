@@ -63,7 +63,7 @@ const deleteDomain = (id) => {
 
 const startTimer = () => {
   updateBlockRules()
-  updateStorage({minutes: minutes.value})
+  updateStorage({ minutes: minutes.value })
   startBlockTimer(minutes.value)
 }
 
@@ -72,7 +72,7 @@ const stopTimer = () => {
 }
 
 const saveMinutes = () => {
-  updateStorage({minutes: minutes.value})
+  updateStorage({ minutes: minutes.value })
 }
 
 onMounted(async () => {
