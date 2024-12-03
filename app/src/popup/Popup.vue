@@ -3,7 +3,13 @@ import Timer from './Timer.vue'
 import { ref, onMounted, computed } from 'vue'
 import { getDomain, isValidDomain, isDomainExisted } from '@/utils/domain'
 import { updateBlockRules } from '@/background/blockDomain.js'
-import { updateStorage, getBlockedDomains, getIsBlocking } from '@/background/storage.js'
+import {
+  updateStorage,
+  getBlockedDomains,
+  getIsBlocking,
+  getMinutes,
+  setMinutes,
+} from '@/background/storage.js'
 import { startBlockTimer, stopBlockTimer } from '@/background/timer.js'
 
 const domain = ref('')
@@ -58,6 +64,7 @@ const deleteDomain = (id) => {
 
 const startTimer = () => {
   updateBlockRules()
+  setMinutes(minutes.value)
   startBlockTimer(minutes.value)
 }
 
@@ -65,7 +72,12 @@ const stopTimer = () => {
   stopBlockTimer()
 }
 
+const saveMinutes = () => {
+  setMinutes(minutes.value)
+}
+
 onMounted(async () => {
+  minutes.value = await getMinutes()
   domains.value = await getBlockedDomains()
   isBlocking.value = await getIsBlocking()
 
@@ -86,7 +98,7 @@ const computedValues = computed(() => ({
   <main>
     <h3>Block Timer</h3>
     <span>{{ minutes }} minutes</span>
-    <input type="range" v-model="minutes" min="1" max="60" step="1" />
+    <input type="range" v-model="minutes" min="1" max="60" step="1" @change="saveMinutes" />
 
     <button v-if="!isBlocking" @click="startTimer">Start</button>
     <button v-else @click="stopTimer" class="stop-btn">Stop</button>
